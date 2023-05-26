@@ -1,0 +1,267 @@
+1.깃허브 리포지티드 생성후 vscode 깃연결
+
+2.vscode 생성위치(C:\Apache24\htdocs)
+
+3.vscode 터미널 실행
+	composer create-project laravel/laravel="9" board
+
+4. 아파치 httpd.conf 편집(242라인 기존 설정 #붙이고)
+	#board laravel
+	 DocumentRoot "${SRVROOT}/htdocs/laravel_board/board/public"
+  	<Directory "${SRVROOT}/htdocs/laravel_board/board/public">
+
+5.서비스-> 아파치 재시작
+
+6. 터미널 실행
+	cd board-> php artisan make:model boards -mfs
+
+7. database/migrations->2023_05_26_010223_create_boards_table.php 편집
+-migrations 2014-19까지 삭제
+-public function up() 추가
+ 	$table->string('title', 30);
+            $table->string('content', 2000);
+            $table->integer('hits');
+	$table->softDeletes();
+
+8.database/facories->boardsfactory.php 편집
+ public function definition()
+    {
+        $date = $this->faker->dateTimeBetween('-1 years');
+        return [
+            'title'         => $this->faker->realText(30)
+            ,'content'      => $this->faker->realText(2000)
+            ,'hits'         => $this->faker->randomNumber(3)
+            ,'created_at'   => $date
+            ,'updated_at'   => $date
+            ,'deleted_at'   => $this->faker->randomNumber(1) <= 5 ? $date:null
+        ];
+    }
+
+9. database/seeders->DatabaseSeeder.php 편집
+public function run()
+    {
+        \App\Models\Boards::factory(20)->create();
+    }
+
+10.env 편집
+	14라인 DB_DATABASE=laravel_board
+	16라인 DB_PASSWORD=root506
+
+11.터미널 php artisan migrate --seed -> yes 엔터-> 
+            mysql laravel-board 테이블 확인
+    
+12.routes/web.php 편집
+4라인 추가 use App\Http\Controllers\BoardsController;
+21라인 추가 Route::resource('/boards', BoardsController::class);
+
+터미널 php artisan make:controller BoardsController --resource
+
+13. http/models/boards.php 편집
+7라인 추가 use Illuminate\Database\Eloquent\SoftDeletes;
+class Boards extends Model
+{
+    use HasFactory,SoftDeletes;
+
+    protected $guarded=['id','created_at'];
+
+    protected $dates= ['deleted_at'];
+}
+
+14.http/Controllers/BoardsController.php 편집
+6라인추가 use App\Models\Boards;
+
+        public function index()
+    {
+        $result = Boards::select(['id','title','hits','created_at','updated_at'])
+        ->orderBy('hits', 'desc')->get();
+        return view('list')->with('data', $result);
+    }
+
+15.resources/view 새로 생성 list.blade.php
+html !생성->레이아웃 생성
+<body>
+    <table>
+        <tr>
+            <th>글번호</th>
+            <th>글제목</th>
+            <th>조회수</th>
+            <th>등록일</th>
+            <th>수정일</th>
+        </tr>
+        @forelse($data as $item)
+            <tr>
+                <td>{{$item->id}}</td>
+                <td>{{$item->title}}</td>
+                <td>{{$item->hits}}</td>
+                <td>{{$item->created_at}}</td>
+                <td>{{$item->updated_at}}</td>
+            </tr>
+        @empty
+            <tr>
+                <td></td>
+                <td>게시글없음</td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+        @endforelse
+    </table>
+</body>
+
+16. 커맨드 php artisan route:list 확인용
+GET|HEAD        / .................................................................................................................................................................................................  
+  POST            _ignition/execute-solution .......................................................................................... ignition.executeSolution › Spatie\LaravelIgnition › ExecuteSolutionController  
+  GET|HEAD        _ignition/health-check ...................................................................................................... ignition.healthCheck › Spatie\LaravelIgnition › HealthCheckController  
+  POST            _ignition/update-config ................................................................................................... ignition.updateConfig › Spatie\LaravelIgnition › UpdateConfigController  
+  GET|HEAD        api/user ..........................................................................................................................................................................................  
+  GET|HEAD        boards ...................................................................................................................................................... boards.index › BoardsController@index  
+  POST            boards ...................................................................................................................................................... boards.store › BoardsController@store  
+  GET|HEAD        boards/create ............................................................................................................................................. boards.create › BoardsController@create  
+  GET|HEAD        boards/{board} ................................................................................................................................................ boards.show › BoardsController@show  
+  PUT|PATCH       boards/{board} ............................................................................................................................................ boards.update › BoardsController@update  
+  DELETE          boards/{board} .......................................................................................................................................... boards.destroy › BoardsController@destroy  
+  GET|HEAD        boards/{board}/edit ........................................................................................................................................... boards.edit › BoardsController@edit  
+  GET|HEAD        sanctum/csrf-cookie ................................................................................................................................... Laravel\Sanctum › CsrfCookieController@show
+
+17.http/Controllers/BoardsController.php 편집
+    public function create()
+    {
+        return view('write');
+    }
+
+18.view write.blade.php 생성
+<body>
+    <form action="{{route('boards.store')}}" method="post">
+        @csrf
+        <label for="title">제목 :</label>
+        <input type="text" name="title" id="title">
+        <br>
+        <label for="content">내용:</laber>
+        <textarea name="content" id="content"></textarea>
+        <br>
+        <button type="submit">작성</button>
+    </form>
+</body>
+
+19. BoardsController 37라인 store 편집
+34라인      * @param  \Illuminate\Http\Request  $req 수정
+
+20.datebase/migrations 생성
+터미널 php artisan make:migration alter_boards_table
+
+21. BoardsController 편집 
+    public function store(Request $req)
+    {
+        $boards = new Boards([
+            'title'     => $req->input('title')
+            ,'content'  => $req->input('content')
+            ,'hits'     => 0
+            
+        ]);
+        $boards->save();
+        return redirect('/boards');
+    }
+
+22. 수정
+터미널 composer require doctrine/dbal
+alter_boards_table
+    public function up()
+    {
+        //패키지 관리자 설치 : composer require doctrine/dbal
+        Schema::table('boards', function (Blueprint $table) {
+            $table->integer('hits')->default(0)->change();
+        });
+        
+    }
+BoardsController
+    public function store(Request $req)
+    {
+        $boards = new Boards([
+            'title'     => $req->input('title')
+            ,'content'  => $req->input('content')
+        ]);
+        $boards->save();
+        return redirect('/boards');
+    }
+23.  list.blade.php
+<td><a href="{{ route('boards.show', ['board' => $item->id]) }}">{{ $item->title }}</a></td>
+
+24. public function show($id)
+    return view('detail');
+
+25. view/detail.blade.php 생성
+<body>
+    <div>
+        글번호:
+        <br>
+        제목:
+        <br>
+        내용:
+        <br>
+        등록일자:
+        <br>
+        수정일자:
+        <br>
+        조회수:
+    </div>
+</body>
+
+26.public function show($id)
+
+    public function show($id)
+    {
+        $boards= Boards::find($id);
+        $boards->hits++;
+        $boards->save();
+        return view('detail');
+    }
+27.config/app 
+'timezone' => 'UTC' -> 'Asia/Seoul'
+
+28. view/detail.blade.php
+<body>
+    <div>
+        글번호 : {{$data->id}}
+        <br>
+        제목 : {{$data->title}}
+        <br>
+        내용 : {{$data->content}}
+        <br>
+        등록일자 : {{$data->created_at}}
+        <br>
+        수정일자 : {{$data->updated_at}}
+        <br>
+        조회수 : {{$data->hits}}
+    </div>
+</body>
+
+29.BoardsController
+
+    public function edit($id)
+    {
+
+        $board = Boards::find($id);
+        return view('edit')->with('data', $board);
+
+    }
+
+find        리턴값 false 
+findorfail  리턴값 예외
+
+30.edit.blade.php 생성
+
+<form action="{{ route('boards.update', ['board' => $data->id]) }}" method="post">
+    @csrf
+    @method('put')
+    <label for="title">제목 :</label>
+    <input type="text" name="title" id="title" value="{{ $data->title }}">
+    <br>
+    <label for="content">내용:</label>
+    <textarea name="content" id="content">{{ $data->content }}</textarea>
+    <br>
+    <button type="submit">작성</button>
+    <button type="button" onclick="location.href='{{ route('boards.show', ['board' => $data->id]) }}'">취소</button>
+</form>
+
+31.
+
