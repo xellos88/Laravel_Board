@@ -1,8 +1,19 @@
 <?php
-
+// -------------------------------------
+// 프로젝트명 :laravel_board
+// 디렉토리    :Controllers
+// 파일명      boardscontroller.php
+// 이력        v001 0526 ~~~
+//             v002 0530 ~~~
+// ---------------------------------------
+// v002 del
+// v002 update start
+// v002 update end
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use App\Models\Boards;
 
 class BoardsController extends Controller
@@ -36,6 +47,13 @@ class BoardsController extends Controller
      */
     public function store(Request $req)
     {
+        // v002 add start 
+        $req -> validate([
+            'title'     => 'required|between:3,30'
+            ,'content'  => 'required|max:1000'
+        ]);
+        // v002 add end
+
         $boards = new Boards([
             'title'     => $req->input('title')
             ,'content'  => $req->input('content')
@@ -82,6 +100,33 @@ class BoardsController extends Controller
      */
     public function update(Request $request, $id)
     {
+        //-------------v002 add start
+        //ID를 리퀘스트 객체에 머지
+        $arr=['id'=>$id];
+        $request->merge($arr);
+        $request->request->add($arr);
+        //-------------v002 add end
+
+        $request->validate([
+            'id'        => 'required|interger'
+            ,'title'    => 'required|between:3,30'
+            ,'content'  => 'required|max:1000'
+        ]);
+
+        // 유효성 검사 방법2
+        // $validator = Validator::make(
+        //     $request->only('id', 'title', 'content'),
+        //     [
+        //         'id' => 'required|integer',
+        //         'title' => 'required|between:3,30',
+        //         'content' => 'required|max:1000',
+        //     ]
+        // );
+
+    if ($validator->fails()) {
+        return redirect()->back()->withErrors($validator)->withInput();
+    }
+
         // $board = Boards::find($id);
         // $board->title = $request->title;
         // $board->content = $request->content;
@@ -109,10 +154,11 @@ class BoardsController extends Controller
      */
     public function destroy($id)
     {
-        Boards::destroy($id);
-        // Boards::findOrFail($id)->delete();
-        return redirect()->route("boards.index");
-        
+        //Boards::destroy($id);
+
+        $board = Boards::find($id)->delete();
+        //$board->delete();
+        return redirect('/boards');
     }
     
 }

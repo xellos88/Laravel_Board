@@ -24,7 +24,7 @@
     <button type="button" onclick="location.href='{{ route('boards.index') }}'">리스트</button>
     <button type="button" onclick="location.href='{{ route('boards.edit', ['board' => $data->id]) }}'">수정</button>
     
-    <form id="delete-form" action="{{ route('boards.destory', ['board' => $data->id]) }}" method="POST">
+    <form action="{{route('boards.destroy', ['board' => $data->id])}}" method="post">
         @csrf
         @method('delete')
         <button type="submit">삭제</button>

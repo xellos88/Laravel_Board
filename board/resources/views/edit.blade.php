@@ -7,18 +7,20 @@
     <title>Edit</title>
 </head>
 <body>
-<form action="{{ route('boards.update', ['board' => $data->id]) }}" method="post">
-    @csrf
-    @method('put')
-    <label for="title">제목 :</label>
-    <input type="text" name="title" id="title" value="{{ $data->title }}">
-    <br>
-    <label for="content">내용:</label>
-    <textarea name="content" id="content">{{ $data->content }}</textarea>
-    <br>
-    <button type="submit">작성</button>
-    <button type="button" onclick="location.href='{{ route('boards.show', ['board' => $data->id]) }}'">취소</button>
-</form>
+    @include('layout.errorsvalidate')
+    <form action="{{ route('boards.update', ['board' => $data->id]) }}" method="post">
+        @csrf
+        @method('put')
+        <label for="title">제목 :</label>
+        <input type="text" name="title" id="title" value="{{ count($errors)> 0 ? old('title'): $data->title }}">
+        <br>
+        <label for="content">내용:</label>
+        <textarea name="content" id="content">{{ count($errors)> 0 ? old('content'): $data->content }}</textarea>
+        <br>
+        <button type="submit">작성</button>
+        <button type="button" onclick="location.href='{{ route('boards.show', ['board' => $data->id]) }}'">취소</button>
+    </form>
+
 
 </body>
 </html>
