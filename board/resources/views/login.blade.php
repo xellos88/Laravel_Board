@@ -1,18 +1,17 @@
 @extends('layout.layout')
 
-@section('title', 'Login')
+@section('title', 'login')
 
 @section('contents')
-    <h1>login</h1>
+    <h1>Login</h1>
     @include('layout.errorsvalidate')
-    <div>
-        {{ isset($success) ? $success : '' }}
-    </div>
+        {{-- <div>{{ session('success') }}</div> --}}
+        <div>{!!session()->has('success')? session('success') : ""!!}</div>
     <form action="{{ route('users.login.post') }}" method="post">
         @csrf
-        <label for="email">Email : </label>
+        <label for="email">Email:</label>
         <input type="text" name="email" id="email">
-        <label for="password">password : </label>
+        <label for="password">Password:</label>
         <input type="password" name="password" id="password">
         <br><br>
         <button type="submit">Login</button>

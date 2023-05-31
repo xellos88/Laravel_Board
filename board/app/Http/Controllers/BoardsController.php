@@ -25,6 +25,11 @@ class BoardsController extends Controller
      */
     public function index()
     {
+        //로그인 체크
+        if(auth()->guest()){
+            return redirect()->route('users.login');
+        }
+
         $result = Boards::select(['id','title','hits','created_at','updated_at'])->orderBy('hits', 'desc')->get();
         return view('list')->with('data', $result);
     }
@@ -160,6 +165,19 @@ class BoardsController extends Controller
         //$board->delete();
         return redirect('/boards');
     }
+    
+    public function loginChk(){
+        if(auth()->guest()){
+            return redirect()->route('uesrs.login');
+        }
+    }
+
+    // public function useredit(){
+    // $id = Auth::id();
+    // $user = User::find($id);
+    // return view('useredit')->with('user', $user);
+    // }
+    
     
 }
 
