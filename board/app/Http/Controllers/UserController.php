@@ -13,10 +13,24 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use App\Models\User;
+use Illuminate\Support\Facades\Log;
 
 class UserController extends Controller
 {
     function login(){
+
+        // $arr['key']= 'test';
+        // $arr['kim']= 'park';
+        // Log::emergency("emergency",$arr);
+        // Log::alert("alert",$arr);
+        // Log::critical("critical",$arr);
+        // Log::error("error",$arr);
+        // Log::warning("warning",$arr);
+        // Log::notice("notice",$arr);
+        // Log::warning("warning",$arr);
+        // Log::info('info',$arr);
+        // Log::debug('debug',$arr);
+
         return view('login');
     }
     function loginpost(Request $req){
@@ -130,7 +144,7 @@ class UserController extends Controller
             return view('useredit')->with('data', $user);
         }
 
-        function editpost(Requst $req){
+        function editpost(Request $req){
             $arrkey=[];
 
             $baseuser = User::find(Auth::User()->id); //기존 데이터 획득
